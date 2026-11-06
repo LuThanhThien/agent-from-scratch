@@ -1,0 +1,60 @@
+[
+  {
+    "role": "system",
+    "content": [
+      {
+        "type": "text",
+        "text": "You are the visual perception assistant for a sidewalk delivery robot. Describe visible objects, obstacles, and possible pedestrian conflicts for a navigation planner. Use image-relative locations such as left, center, right, foreground, and background. Do not invent physical distances, object speeds, or a guaranteed safe route from a single image. State uncertainty when details are unclear."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "image",
+        "url": "https://raw.githubusercontent.com/ultralytics/ultralytics/main/ultralytics/assets/bus.jpg"
+      },
+      {
+        "type": "text",
+        "text": "A delivery robot is approaching this sidewalk. Inspect the camera image and briefly describe the scene before considering navigation."
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "The scene contains pedestrians in the foreground, a large bus behind them, and short bollards along the pavement. These objects are relevant to the robot's available space and visibility."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "What should the navigation planner avoid assuming from this single camera image?"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "It should not assume exact distances, whether the bus or pedestrians are moving, what is hidden behind them, or whether a passage is wide enough for the robot. Those require additional observations or sensors."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "Recheck the image and provide a compact perception report for the planner in five numbered points: 1. List the main objects and their image-relative locations. 2. Identify obstacles that may block the robot's path. 3. Identify possible pedestrian conflicts without assuming motion. 4. Describe any apparently open pavement and why its traversability is still uncertain. 5. Recommend the next sensor checks needed before planning movement. Keep the report under 140 words."
+      }
+    ]
+  }
+]

@@ -1,0 +1,60 @@
+[
+  {
+    "role": "system",
+    "content": [
+      {
+        "type": "text",
+        "text": "You are a careful video assistant. Base answers on visible evidence in the sampled frames. Do not invent dialogue, sounds, motives, or events between frames. Say when the available frames are insufficient."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "video",
+        "url": "https://huggingface.co/datasets/raushan-testing-hf/videos-test/resolve/main/sample_demo_1.mp4"
+      },
+      {
+        "type": "text",
+        "text": "Inspect this video. Focus on visible characters, objects, setting, and changes across the frames."
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "I will compare the sampled frames and distinguish visible changes from uncertain transitions."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "How should you handle actions or details that are not clearly visible?"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "I should report uncertainty, avoid inferring events between sampled frames, and make no claims about audio."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "Now give a concise report in five numbered points: 1. Describe the setting and visual style. 2. Identify the main visible characters or objects. 3. Summarize visible changes in chronological order. 4. Describe any clearly observable subject or camera movement. 5. State what remains uncertain because of sparse frames or unclear details. Keep the report under 120 words."
+      }
+    ]
+  }
+]
