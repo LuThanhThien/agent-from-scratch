@@ -1,5 +1,4 @@
 from ._base import (
-    tool,
     execute_tool,
 )
 

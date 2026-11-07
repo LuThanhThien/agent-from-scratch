@@ -1,11 +1,8 @@
 from pathlib import Path
 
-from ._base import tool
-
-_ROOT = Path(__file__).resolve().parent.parent
+_ROOT = Path(__file__).resolve().parents[2]
 
 
-@tool
 def read_file(path: str, max_chars: int = 10_000) -> dict:
     """Read a UTF-8 file relative to the repository, up to max_chars characters."""
 
