@@ -13,7 +13,7 @@ class ReadFileTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name) / "repo"
         self.root.mkdir()
-        self.patch = patch("tools.read_file._ROOT", self.root)
+        self.patch = patch("agent.tools.read_file._ROOT", self.root)
         self.patch.start()
         self.addCleanup(self.patch.stop)
 
