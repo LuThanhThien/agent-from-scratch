@@ -1,0 +1,487 @@
+{
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "quantization": "4-bit NF4, float16 compute",
+  "temperature": 0,
+  "max_new_tokens": 160,
+  "tools": [
+    {
+      "name": "read_file",
+      "description": "Read a UTF-8 file relative to the repository, up to max_chars characters.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "max_chars": {
+            "type": "integer",
+            "default": 10000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_weather",
+      "description": "Get the current weather for a city.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "write_file",
+      "description": "Write the provided text to a file at a repository-relative path.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "open_web",
+      "description": "Open a web page at the supplied URL.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ],
+  "cases": [
+    {
+      "id": "one_file",
+      "category": "single",
+      "prompt": "Read notes.txt and summarize it.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "notes.txt"
+          }
+        }
+      ],
+      "group": "read_weather"
+    },
+    {
+      "id": "code_file",
+      "category": "single",
+      "prompt": "Read agent/tools/read_file.py and explain its contents.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "agent/tools/read_file.py"
+          }
+        }
+      ],
+      "group": "read_weather"
+    },
+    {
+      "id": "two_files",
+      "category": "multiple",
+      "prompt": "Read README.md and notes.txt and summarize both files.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "README.md"
+          }
+        },
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "notes.txt"
+          }
+        }
+      ],
+      "group": "read_weather"
+    },
+    {
+      "id": "three_files",
+      "category": "multiple",
+      "prompt": "Read README.md, notes.txt, and docs/guide.md. Summarize each file.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "README.md"
+          }
+        },
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "notes.txt"
+          }
+        },
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "docs/guide.md"
+          }
+        }
+      ],
+      "group": "read_weather"
+    },
+    {
+      "id": "path_spaces",
+      "category": "single",
+      "prompt": "Read the file 'docs/release notes.md' and summarize it.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "docs/release notes.md"
+          }
+        }
+      ],
+      "group": "read_weather"
+    },
+    {
+      "id": "weather_city",
+      "category": "single",
+      "prompt": "What is the current weather in Seoul?",
+      "expected": [
+        {
+          "tool": "get_weather",
+          "arguments": {
+            "city": "Seoul"
+          }
+        }
+      ],
+      "group": "read_weather"
+    },
+    {
+      "id": "weather_two",
+      "category": "multiple",
+      "prompt": "What is the current weather in Seoul and Busan?",
+      "expected": [
+        {
+          "tool": "get_weather",
+          "arguments": {
+            "city": "Seoul"
+          }
+        },
+        {
+          "tool": "get_weather",
+          "arguments": {
+            "city": "Busan"
+          }
+        }
+      ],
+      "group": "read_weather"
+    },
+    {
+      "id": "mixed_tools",
+      "category": "multiple",
+      "prompt": "Read README.md and tell me the current weather in Seoul.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "README.md"
+          }
+        },
+        {
+          "tool": "get_weather",
+          "arguments": {
+            "city": "Seoul"
+          }
+        }
+      ],
+      "group": "read_weather"
+    },
+    {
+      "id": "greeting",
+      "category": "no_tool",
+      "prompt": "Hello there!",
+      "expected": [],
+      "group": "read_weather"
+    },
+    {
+      "id": "arithmetic",
+      "category": "no_tool",
+      "prompt": "What is 2 + 3?",
+      "expected": [],
+      "group": "read_weather"
+    },
+    {
+      "id": "missing_path",
+      "category": "missing_argument",
+      "prompt": "Can you read a file for me?",
+      "expected": [],
+      "group": "read_weather"
+    },
+    {
+      "id": "missing_city",
+      "category": "missing_argument",
+      "prompt": "What is the weather right now?",
+      "expected": [],
+      "group": "read_weather"
+    },
+    {
+      "id": "write_one",
+      "group": "write_web",
+      "category": "single",
+      "prompt": "Write \"Meeting at 9\" to notes/meeting.txt.",
+      "expected": [
+        {
+          "tool": "write_file",
+          "arguments": {
+            "path": "notes/meeting.txt",
+            "content": "Meeting at 9"
+          }
+        }
+      ]
+    },
+    {
+      "id": "write_spaces",
+      "group": "write_web",
+      "category": "single",
+      "prompt": "Write \"Ready\" to the file \"docs/status update.txt\".",
+      "expected": [
+        {
+          "tool": "write_file",
+          "arguments": {
+            "path": "docs/status update.txt",
+            "content": "Ready"
+          }
+        }
+      ]
+    },
+    {
+      "id": "open_one",
+      "group": "write_web",
+      "category": "single",
+      "prompt": "Open https://example.com/docs for me.",
+      "expected": [
+        {
+          "tool": "open_web",
+          "arguments": {
+            "url": "https://example.com/docs"
+          }
+        }
+      ]
+    },
+    {
+      "id": "write_two",
+      "group": "write_web",
+      "category": "multiple",
+      "prompt": "Write \"Red\" to red.txt and write \"Blue\" to blue.txt.",
+      "expected": [
+        {
+          "tool": "write_file",
+          "arguments": {
+            "path": "red.txt",
+            "content": "Red"
+          }
+        },
+        {
+          "tool": "write_file",
+          "arguments": {
+            "path": "blue.txt",
+            "content": "Blue"
+          }
+        }
+      ]
+    },
+    {
+      "id": "open_two",
+      "group": "write_web",
+      "category": "multiple",
+      "prompt": "Open both https://example.com/a and https://example.org/b.",
+      "expected": [
+        {
+          "tool": "open_web",
+          "arguments": {
+            "url": "https://example.com/a"
+          }
+        },
+        {
+          "tool": "open_web",
+          "arguments": {
+            "url": "https://example.org/b"
+          }
+        }
+      ]
+    },
+    {
+      "id": "write_and_open",
+      "group": "write_web",
+      "category": "multiple",
+      "prompt": "Write \"Done\" to status.txt and open https://example.com/status.",
+      "expected": [
+        {
+          "tool": "write_file",
+          "arguments": {
+            "path": "status.txt",
+            "content": "Done"
+          }
+        },
+        {
+          "tool": "open_web",
+          "arguments": {
+            "url": "https://example.com/status"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read_and_write",
+      "group": "write_web",
+      "category": "multiple",
+      "prompt": "Read draft.md, and separately write \"Published\" to status.txt.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "draft.md"
+          }
+        },
+        {
+          "tool": "write_file",
+          "arguments": {
+            "path": "status.txt",
+            "content": "Published"
+          }
+        }
+      ]
+    },
+    {
+      "id": "weather_and_open",
+      "group": "write_web",
+      "category": "multiple",
+      "prompt": "Check the current weather in Paris and open https://example.com/news.",
+      "expected": [
+        {
+          "tool": "get_weather",
+          "arguments": {
+            "city": "Paris"
+          }
+        },
+        {
+          "tool": "open_web",
+          "arguments": {
+            "url": "https://example.com/news"
+          }
+        }
+      ]
+    },
+    {
+      "id": "second_greeting",
+      "group": "write_web",
+      "category": "no_tool",
+      "prompt": "Good morning!",
+      "expected": []
+    },
+    {
+      "id": "write_missing_path",
+      "group": "write_web",
+      "category": "missing_argument",
+      "prompt": "Write \"Hello\" to a file for me.",
+      "expected": []
+    },
+    {
+      "id": "write_missing_content",
+      "group": "write_web",
+      "category": "missing_argument",
+      "prompt": "Write something to notes.txt.",
+      "expected": []
+    },
+    {
+      "id": "open_missing_url",
+      "group": "write_web",
+      "category": "missing_argument",
+      "prompt": "Open a web page for me.",
+      "expected": []
+    }
+  ],
+  "variants": {
+    "baseline_six_examples": {
+      "description": "Experiment 2 baseline; catalog expanded to four tools",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]\nExamples:\nUser: Read alpha.md and beta.md.\nOutput: {\"tool_calls\":[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"alpha.md\"}},{\"tool\":\"read_file\",\"arguments\":{\"path\":\"beta.md\"}}]}\nUser: Read alpha.md and get the current weather in Oslo.\nOutput: {\"tool_calls\":[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"alpha.md\"}},{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Oslo\"}}]}\nUser: Get current weather in Oslo and Rome.\nOutput: {\"tool_calls\":[{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Oslo\"}},{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Rome\"}}]}\nUser: Read a file for me.\nOutput: {\"tool_calls\":[]}\nUser: What is the weather?\nOutput: {\"tool_calls\":[]}\nUser: Hello!\nOutput: {\"tool_calls\":[]}"
+    },
+    "no_task_examples": {
+      "description": "Baseline rules without task examples",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]"
+    },
+    "no_json_examples": {
+      "description": "Describe the JSON structure in prose, no JSON examples",
+      "system": "Select all independent requested operations using only the available tools and arguments provided by the user. Never invent arguments. Return only a JSON object with one key named tool_calls containing a list of calls. Each call is an object with a tool string and an arguments object. Use an empty list if no calls can be made.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]"
+    },
+    "old_positive_only": {
+      "description": "Baseline with only positive read/weather examples",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]\nExamples:\nUser: Read alpha.md and beta.md.\nOutput: {\"tool_calls\":[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"alpha.md\"}},{\"tool\":\"read_file\",\"arguments\":{\"path\":\"beta.md\"}}]}\nUser: Read alpha.md and get the current weather in Oslo.\nOutput: {\"tool_calls\":[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"alpha.md\"}},{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Oslo\"}}]}\nUser: Get current weather in Oslo and Rome.\nOutput: {\"tool_calls\":[{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Oslo\"}},{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Rome\"}}]}"
+    },
+    "old_negative_only": {
+      "description": "Baseline with only no-call examples",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]\nExamples:\nUser: Read a file for me.\nOutput: {\"tool_calls\":[]}\nUser: What is the weather?\nOutput: {\"tool_calls\":[]}\nUser: Hello!\nOutput: {\"tool_calls\":[]}"
+    },
+    "unrelated_examples": {
+      "description": "Examples use other realistic, unavailable tools",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]\nExamples:\nThese examples show format only; their tools are unavailable. Use only the listed tools.\nUser: Reverse abc.\nOutput: {\"tool_calls\":[{\"tool\":\"reverse_text\",\"arguments\":{\"text\":\"abc\"}}]}\nUser: Count letters in hello.\nOutput: {\"tool_calls\":[{\"tool\":\"count_letters\",\"arguments\":{\"text\":\"hello\"}}]}\nUser: Convert 2 meters to centimeters.\nOutput: {\"tool_calls\":[{\"tool\":\"convert_units\",\"arguments\":{\"value\":\"2\",\"unit\":\"meters\"}}]}\nUser: Reverse a word for me.\nOutput: {\"tool_calls\":[]}\nUser: Hello!\nOutput: {\"tool_calls\":[]}\nUser: What is 4 + 4?\nOutput: {\"tool_calls\":[]}"
+    },
+    "abstract_examples": {
+      "description": "Examples use abstract, unavailable tool names",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]\nExamples:\nThese examples show format only; their tools are unavailable. Use only the listed tools.\nUser: Perform action alpha on A.\nOutput: {\"tool_calls\":[{\"tool\":\"tool_alpha\",\"arguments\":{\"arg\":\"A\"}}]}\nUser: Perform action beta on B.\nOutput: {\"tool_calls\":[{\"tool\":\"tool_beta\",\"arguments\":{\"arg\":\"B\"}}]}\nUser: Perform alpha on A and beta on B.\nOutput: {\"tool_calls\":[{\"tool\":\"tool_alpha\",\"arguments\":{\"arg\":\"A\"}},{\"tool\":\"tool_beta\",\"arguments\":{\"arg\":\"B\"}}]}\nUser: Perform alpha.\nOutput: {\"tool_calls\":[]}\nUser: Hello!\nOutput: {\"tool_calls\":[]}\nUser: What is 4 + 4?\nOutput: {\"tool_calls\":[]}"
+    },
+    "all_tool_examples": {
+      "description": "Examples cover all four available tools",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]\nExamples:\nUser: Read memo.md.\nOutput: {\"tool_calls\":[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"memo.md\"}}]}\nUser: Check weather in Lima.\nOutput: {\"tool_calls\":[{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Lima\"}}]}\nUser: Write \"OK\" to memo.md.\nOutput: {\"tool_calls\":[{\"tool\":\"write_file\",\"arguments\":{\"path\":\"memo.md\",\"content\":\"OK\"}}]}\nUser: Open https://example.net/start.\nOutput: {\"tool_calls\":[{\"tool\":\"open_web\",\"arguments\":{\"url\":\"https://example.net/start\"}}]}\nUser: Read memo.md and open https://example.net/start.\nOutput: {\"tool_calls\":[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"memo.md\"}},{\"tool\":\"open_web\",\"arguments\":{\"url\":\"https://example.net/start\"}}]}\nUser: Hello!\nOutput: {\"tool_calls\":[]}"
+    },
+    "new_tool_examples": {
+      "description": "Examples cover write and web but not read or weather",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]\nExamples:\nUser: Write \"OK\" to memo.md.\nOutput: {\"tool_calls\":[{\"tool\":\"write_file\",\"arguments\":{\"path\":\"memo.md\",\"content\":\"OK\"}}]}\nUser: Open https://example.net/start.\nOutput: {\"tool_calls\":[{\"tool\":\"open_web\",\"arguments\":{\"url\":\"https://example.net/start\"}}]}\nUser: Write \"A\" to a.txt and \"B\" to b.txt.\nOutput: {\"tool_calls\":[{\"tool\":\"write_file\",\"arguments\":{\"path\":\"a.txt\",\"content\":\"A\"}},{\"tool\":\"write_file\",\"arguments\":{\"path\":\"b.txt\",\"content\":\"B\"}}]}\nUser: Open https://example.net/a and https://example.net/b.\nOutput: {\"tool_calls\":[{\"tool\":\"open_web\",\"arguments\":{\"url\":\"https://example.net/a\"}},{\"tool\":\"open_web\",\"arguments\":{\"url\":\"https://example.net/b\"}}]}\nUser: Write something to memo.md.\nOutput: {\"tool_calls\":[]}\nUser: Hello!\nOutput: {\"tool_calls\":[]}"
+    },
+    "read_write_contrast": {
+      "description": "Examples contrast reading and writing and cover all tools",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]\nExamples:\nUser: Read memo.md.\nOutput: {\"tool_calls\":[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"memo.md\"}}]}\nUser: Write \"OK\" to memo.md.\nOutput: {\"tool_calls\":[{\"tool\":\"write_file\",\"arguments\":{\"path\":\"memo.md\",\"content\":\"OK\"}}]}\nUser: Open https://example.net/start.\nOutput: {\"tool_calls\":[{\"tool\":\"open_web\",\"arguments\":{\"url\":\"https://example.net/start\"}}]}\nUser: Open a web page.\nOutput: {\"tool_calls\":[]}\nUser: Check weather in Lima.\nOutput: {\"tool_calls\":[{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Lima\"}}]}\nUser: Hello!\nOutput: {\"tool_calls\":[]}"
+    },
+    "catalog_last": {
+      "description": "Baseline examples precede the tool catalog",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nExamples:\nUser: Read alpha.md and beta.md.\nOutput: {\"tool_calls\":[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"alpha.md\"}},{\"tool\":\"read_file\",\"arguments\":{\"path\":\"beta.md\"}}]}\nUser: Read alpha.md and get the current weather in Oslo.\nOutput: {\"tool_calls\":[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"alpha.md\"}},{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Oslo\"}}]}\nUser: Get current weather in Oslo and Rome.\nOutput: {\"tool_calls\":[{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Oslo\"}},{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Rome\"}}]}\nUser: Read a file for me.\nOutput: {\"tool_calls\":[]}\nUser: What is the weather?\nOutput: {\"tool_calls\":[]}\nUser: Hello!\nOutput: {\"tool_calls\":[]}\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]"
+    },
+    "short_no_examples": {
+      "description": "Short instruction without task examples",
+      "system": "Select all independent requested tool calls. Use only listed tools and supplied arguments. If required arguments are missing, omit that call. Return only a JSON object with a tool_calls list of objects containing tool and arguments; use an empty list when no calls apply.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]"
+    },
+    "checklist_no_examples": {
+      "description": "Baseline rules with a generic coverage checklist",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]\nBefore returning, check every requested independent operation, required arguments, and whether any call was added without a request."
+    },
+    "tool_hints_no_examples": {
+      "description": "Baseline rules plus descriptions distinguishing similar tools",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, {\"name\": \"write_file\", \"description\": \"Write the provided text to a file at a repository-relative path.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"], \"additionalProperties\": false}}, {\"name\": \"open_web\", \"description\": \"Open a web page at the supplied URL.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"], \"additionalProperties\": false}}]\nReading does not write. Writing needs a path and exact content. Opening a page needs its URL. Current weather needs a city. Do not infer missing values."
+    }
+  },
+  "note": "All cases and schemas are fixed across variants. Calls are simulated and never executed. Baseline expands experiment 2 from two tools to four. Original cases are reused, so this is exploratory."
+}

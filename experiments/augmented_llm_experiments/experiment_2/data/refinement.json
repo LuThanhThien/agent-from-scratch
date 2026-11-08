@@ -1,0 +1,239 @@
+{
+  "variants": {
+    "refine_generic_marked_array": {
+      "style": "refine_generic",
+      "format": "marked_array",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: <start_tool_call>[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]<end_tool_call>. If no calls can be made, return <start_tool_call>[]<end_tool_call>. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}]"
+    },
+    "refine_generic_plain_object": {
+      "style": "refine_generic",
+      "format": "plain_object",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}]"
+    },
+    "refine_balanced_examples_marked_array": {
+      "style": "refine_balanced_examples",
+      "format": "marked_array",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: <start_tool_call>[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]<end_tool_call>. If no calls can be made, return <start_tool_call>[]<end_tool_call>. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}]\nExamples:\nUser: Read alpha.md and beta.md.\nOutput: <start_tool_call>[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"alpha.md\"}},{\"tool\":\"read_file\",\"arguments\":{\"path\":\"beta.md\"}}]<end_tool_call>\nUser: Read alpha.md and get the current weather in Oslo.\nOutput: <start_tool_call>[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"alpha.md\"}},{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Oslo\"}}]<end_tool_call>\nUser: Get current weather in Oslo and Rome.\nOutput: <start_tool_call>[{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Oslo\"}},{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Rome\"}}]<end_tool_call>\nUser: Read a file for me.\nOutput: <start_tool_call>[]<end_tool_call>\nUser: What is the weather?\nOutput: <start_tool_call>[]<end_tool_call>\nUser: Hello!\nOutput: <start_tool_call>[]<end_tool_call>"
+    },
+    "refine_balanced_examples_plain_object": {
+      "style": "refine_balanced_examples",
+      "format": "plain_object",
+      "system": "You are selecting tool calls, not answering the user. Identify every independent operation the user requests and include one call for each, even if the same tool is needed more than once. Use only the listed tools and the exact argument names. Use only values supplied by the user. Omit an operation if its required argument is missing; never invent paths or cities. Do not add unrequested calls. Return a single batch in this format: {\"tool_calls\":[{\"tool\":\"tool_name\",\"arguments\":{\"argument_name\":\"argument_value\"}}]}. If no calls can be made, return {\"tool_calls\":[]}. Return no explanation or other text.\nAvailable tools: [{\"name\": \"read_file\", \"description\": \"Read a UTF-8 file relative to the repository, up to max_chars characters.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"max_chars\": {\"type\": \"integer\", \"default\": 10000}}, \"required\": [\"path\"], \"additionalProperties\": false}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}]\nExamples:\nUser: Read alpha.md and beta.md.\nOutput: {\"tool_calls\":[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"alpha.md\"}},{\"tool\":\"read_file\",\"arguments\":{\"path\":\"beta.md\"}}]}\nUser: Read alpha.md and get the current weather in Oslo.\nOutput: {\"tool_calls\":[{\"tool\":\"read_file\",\"arguments\":{\"path\":\"alpha.md\"}},{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Oslo\"}}]}\nUser: Get current weather in Oslo and Rome.\nOutput: {\"tool_calls\":[{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Oslo\"}},{\"tool\":\"get_weather\",\"arguments\":{\"city\":\"Rome\"}}]}\nUser: Read a file for me.\nOutput: {\"tool_calls\":[]}\nUser: What is the weather?\nOutput: {\"tool_calls\":[]}\nUser: Hello!\nOutput: {\"tool_calls\":[]}"
+    }
+  },
+  "cases": [
+    {
+      "id": "one_file",
+      "category": "single",
+      "prompt": "Read notes.txt and summarize it.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "notes.txt"
+          }
+        }
+      ]
+    },
+    {
+      "id": "code_file",
+      "category": "single",
+      "prompt": "Read agent/tools/read_file.py and explain its contents.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "agent/tools/read_file.py"
+          }
+        }
+      ]
+    },
+    {
+      "id": "two_files",
+      "category": "multiple",
+      "prompt": "Read README.md and notes.txt and summarize both files.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "README.md"
+          }
+        },
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "notes.txt"
+          }
+        }
+      ]
+    },
+    {
+      "id": "three_files",
+      "category": "multiple",
+      "prompt": "Read README.md, notes.txt, and docs/guide.md. Summarize each file.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "README.md"
+          }
+        },
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "notes.txt"
+          }
+        },
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "docs/guide.md"
+          }
+        }
+      ]
+    },
+    {
+      "id": "path_spaces",
+      "category": "single",
+      "prompt": "Read the file 'docs/release notes.md' and summarize it.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "docs/release notes.md"
+          }
+        }
+      ]
+    },
+    {
+      "id": "weather_city",
+      "category": "single",
+      "prompt": "What is the current weather in Seoul?",
+      "expected": [
+        {
+          "tool": "get_weather",
+          "arguments": {
+            "city": "Seoul"
+          }
+        }
+      ]
+    },
+    {
+      "id": "weather_two",
+      "category": "multiple",
+      "prompt": "What is the current weather in Seoul and Busan?",
+      "expected": [
+        {
+          "tool": "get_weather",
+          "arguments": {
+            "city": "Seoul"
+          }
+        },
+        {
+          "tool": "get_weather",
+          "arguments": {
+            "city": "Busan"
+          }
+        }
+      ]
+    },
+    {
+      "id": "mixed_tools",
+      "category": "multiple",
+      "prompt": "Read README.md and tell me the current weather in Seoul.",
+      "expected": [
+        {
+          "tool": "read_file",
+          "arguments": {
+            "path": "README.md"
+          }
+        },
+        {
+          "tool": "get_weather",
+          "arguments": {
+            "city": "Seoul"
+          }
+        }
+      ]
+    },
+    {
+      "id": "greeting",
+      "category": "no_tool",
+      "prompt": "Hello there!",
+      "expected": []
+    },
+    {
+      "id": "arithmetic",
+      "category": "no_tool",
+      "prompt": "What is 2 + 3?",
+      "expected": []
+    },
+    {
+      "id": "missing_path",
+      "category": "missing_argument",
+      "prompt": "Can you read a file for me?",
+      "expected": []
+    },
+    {
+      "id": "missing_city",
+      "category": "missing_argument",
+      "prompt": "What is the weather right now?",
+      "expected": []
+    }
+  ],
+  "tools": [
+    {
+      "name": "read_file",
+      "description": "Read a UTF-8 file relative to the repository, up to max_chars characters.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "max_chars": {
+            "type": "integer",
+            "default": 10000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_weather",
+      "description": "Get the current weather for a city.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ],
+  "temperature": 0,
+  "max_new_tokens": 160,
+  "models": {
+    "llama1b": [
+      "meta-llama/Llama-3.2-1B-Instruct",
+      false
+    ],
+    "llama3b": [
+      "meta-llama/Llama-3.2-3B-Instruct",
+      true
+    ],
+    "lfm1b": [
+      "LiquidAI/LFM2.5-1.2B-Instruct",
+      false
+    ]
+  },
+  "note": "These prompts were designed after examining initial results and reuse the same test cases; this is exploratory, not a held-out evaluation."
+}

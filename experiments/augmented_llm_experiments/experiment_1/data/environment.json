@@ -1,0 +1,17 @@
+{
+  "branch": "augmented-llm",
+  "commit": "fd7be79444ba6f664b5f25cf0bb7c0c730440dd1",
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "3.13.11",
+  "torch": "2.15.0+cu132",
+  "transformers": "5.22.1",
+  "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+  "gpu_memory_gb": 4.0,
+  "model_cache_revisions": {
+    "meta-llama/Llama-3.2-1B-Instruct": "9213176726f574b556790deb65791e0c5aa438b6",
+    "meta-llama/Llama-3.2-3B-Instruct": "0cb88a4f764b7a12671c53f0838cd831a0843b95",
+    "LiquidAI/LFM2.5-1.2B-Instruct": "b9d816ab510f9a28dca37cb182e9da8b0226e13c"
+  },
+  "hf_offline": true,
+  "model_use": "Direct LLMRunner.run only; simulated tool observations, no tool execution"
+}
