@@ -2,7 +2,7 @@ from collections.abc import Callable
 from loguru import logger
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
+from transformers import AutoModelForCausalLM, AutoProcessor, TextStreamer
 
 from ._base import ModelRunner
 
@@ -29,19 +29,25 @@ class LLMRunner(ModelRunner):
         self,
         model_name: str = DEFAULT_MODEL,
         device: str | None = None,
+        *,
+        dtype=None,
     ):
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = torch.device(device)
         logger.info(f"Using {self.device}")
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        if dtype is not None:
+            self.dtype = dtype
+        else:
+            self.dtype = torch.float32 if self.device.type == "cpu" else torch.bfloat16
+
+        self.tokenizer = AutoProcessor.from_pretrained(model_name)
         # NOTE: to suppress "[transformers] Ignoring clean_up_tokenization_spaces=True
         # for BPE tokenizer TokenizersBackend" warning
         self.tokenizer.clean_up_tokenization_spaces = False
 
-        dtype = torch.float32 if self.device.type == "cpu" else torch.float16
-        self.model = AutoModelForCausalLM.from_pretrained(model_name, dtype=dtype)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, dtype=self.dtype)
         logger.info(f"Using {model_name}")
 
         self.model.to(self.device)
@@ -55,6 +61,7 @@ class LLMRunner(ModelRunner):
         max_new_tokens: int = 256,
         temperature: float = 0.7,
         top_p: float = 0.9,
+        tools: list = [],
     ) -> str:
         """Return the answer with given prompt.
         A prompt can be a string or chat messages with role/content keys.
@@ -93,11 +100,11 @@ class LLMRunner(ModelRunner):
             tokenize=True,
             return_dict=True,
             return_tensors="pt",
+            tools=tools,
         )
-        inputs = inputs.to(self.device)
-
         # Generation
         with torch.inference_mode():
+            inputs = inputs.to(self.device)
             output = self.model.generate(**inputs, **generation_options)
 
         # Answer decoding
