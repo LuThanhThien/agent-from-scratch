@@ -1,10 +1,17 @@
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parents[2]
-
 
 def read_file(path: str, max_chars: int = 10_000) -> dict:
-    """Read a UTF-8 file relative to the repository, up to max_chars characters."""
+    """Read a UTF-8 file.
+
+    Args:
+        path: Path to the file.
+        max_chars: Maximum number of characters to read from the file.
+
+    Returns:
+        A dictionary containing the path, the file content,
+        and whether the content was truncated.
+    """
 
     # Validate input
     if type(path) is not str:
@@ -17,13 +24,8 @@ def read_file(path: str, max_chars: int = 10_000) -> dict:
         raise ValueError("max_chars must be greater than zero")
 
     # Resolve path
-    file_path = Path(path)
-    if file_path.is_absolute():
-        raise ValueError("path must be relative to the repository")
+    file_path = Path(path).resolve().absolute()
 
-    file_path = (_ROOT / file_path).resolve()
-    if not file_path.is_relative_to(_ROOT):
-        raise PermissionError("path must stay within the repository")
     if file_path.exists() and not file_path.is_file():
         raise ValueError("path must refer to a regular file")
 
@@ -33,7 +35,7 @@ def read_file(path: str, max_chars: int = 10_000) -> dict:
 
     # File result
     return {
-        "path": file_path.relative_to(_ROOT).as_posix(),
+        "path": file_path.as_posix(),
         "content": content[:max_chars],
         "truncated": len(content) > max_chars,
     }
