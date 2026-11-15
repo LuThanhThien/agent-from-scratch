@@ -1,15 +1,16 @@
 from pathlib import Path
 
-from ._base import tool
-
-_ROOT = Path(__file__).resolve().parent.parent
+_ROOT = Path(__file__).resolve().parents[2]
 
 
-@tool
 def read_file(path: str, max_chars: int = 10_000) -> dict:
     """Read a UTF-8 file relative to the repository, up to max_chars characters."""
 
     # Validate input
+    if type(path) is not str:
+        raise TypeError("path must be str")
+    if type(max_chars) is not int:
+        raise TypeError("max_chars must be int")
     if not path.strip():
         raise ValueError("path must not be empty")
     if max_chars <= 0:

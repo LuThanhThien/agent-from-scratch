@@ -3,7 +3,6 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
-from agent.tools._base import execute_tool
 from agent.tools.read_file import read_file
 
 
@@ -13,7 +12,7 @@ class ReadFileTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name) / "repo"
         self.root.mkdir()
-        self.patch = patch("tools.read_file._ROOT", self.root)
+        self.patch = patch("agent.tools.read_file._ROOT", self.root)
         self.patch.start()
         self.addCleanup(self.patch.stop)
 
@@ -23,16 +22,13 @@ class ReadFileTests(unittest.TestCase):
         (self.root / "notes").mkdir()
         (self.root / "notes/example.txt").write_text("Hello world", encoding="utf-8")
 
-        result = execute_tool(read_file, {"path": "notes/../notes/example.txt"})
+        result = read_file("notes/../notes/example.txt")
         self.assertEqual(
             result,
             {
-                "ok": True,
-                "data": {
-                    "path": "notes/example.txt",
-                    "content": "Hello world",
-                    "truncated": False,
-                },
+                "path": "notes/example.txt",
+                "content": "Hello world",
+                "truncated": False,
             },
         )
 
@@ -53,10 +49,9 @@ class ReadFileTests(unittest.TestCase):
         """Treat an empty file as a successful read."""
 
         (self.root / "empty.txt").touch()
-        result = execute_tool(read_file, {"path": "empty.txt"})
-        self.assertTrue(result["ok"])
-        self.assertEqual(result["data"]["content"], "")
-        self.assertFalse(result["data"]["truncated"])
+        result = read_file("empty.txt")
+        self.assertEqual(result["content"], "")
+        self.assertFalse(result["truncated"])
 
     def test_default_limit(self):
         """Limit returned content to 10,000 characters by default."""
@@ -67,33 +62,32 @@ class ReadFileTests(unittest.TestCase):
         self.assertTrue(result["truncated"])
 
     def test_missing_file(self):
-        """Report missing files through the shared error wrapper."""
+        """Raise an error when the file does not exist."""
 
-        result = execute_tool(read_file, {"path": "missing.txt"})
-        self.assertFalse(result["ok"])
-        self.assertEqual(result["error"]["type"], "FileNotFoundError")
+        with self.assertRaises(FileNotFoundError):
+            read_file("missing.txt")
 
     def test_invalid_utf8(self):
         """Report undecodable content instead of returning corrupted text."""
 
         (self.root / "binary.bin").write_bytes(b"\xff\xfe")
-        result = execute_tool(read_file, {"path": "binary.bin"})
-        self.assertFalse(result["ok"])
-        self.assertEqual(result["error"]["type"], "UnicodeDecodeError")
+        with self.assertRaises(UnicodeDecodeError):
+            read_file("binary.bin")
 
     def test_invalid_input(self):
         """Reject empty paths, invalid limits, and non-string paths."""
 
-        for arguments in (
-            {"path": ""},
-            {"path": " "},
-            {"path": "file.txt", "max_chars": 0},
-            {"path": "file.txt", "max_chars": -1},
-            {"path": "file.txt", "max_chars": True},
-            {"path": 123},
+        for arguments, error in (
+            ({"path": ""}, ValueError),
+            ({"path": " "}, ValueError),
+            ({"path": "file.txt", "max_chars": 0}, ValueError),
+            ({"path": "file.txt", "max_chars": -1}, ValueError),
+            ({"path": "file.txt", "max_chars": True}, TypeError),
+            ({"path": 123}, TypeError),
         ):
             with self.subTest(arguments=arguments):
-                self.assertFalse(execute_tool(read_file, arguments)["ok"])
+                with self.assertRaises(error):
+                    read_file(**arguments)
 
     def test_directory(self):
         """Reject directories instead of trying to read them as files."""
@@ -119,6 +113,13 @@ class ReadFileTests(unittest.TestCase):
         (self.root / "link.txt").symlink_to(outside)
         with self.assertRaises(PermissionError):
             read_file("link.txt")
+
+
+class ReadFileRepositoryTests(unittest.TestCase):
+    def test_repository_root(self):
+        """Read a file relative to the actual repository root."""
+        result = read_file("agent/tools/read_file.py")
+        self.assertEqual(result["path"], "agent/tools/read_file.py")
 
 
 if __name__ == "__main__":
