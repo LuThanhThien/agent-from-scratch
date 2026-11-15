@@ -1,7 +1,7 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
+import os
 import unittest
-from unittest.mock import patch
 
 from agent.tools.read_file import read_file
 
@@ -12,12 +12,11 @@ class ReadFileTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name) / "repo"
         self.root.mkdir()
-        self.patch = patch("agent.tools.read_file._ROOT", self.root)
-        self.patch.start()
-        self.addCleanup(self.patch.stop)
+        self.addCleanup(os.chdir, Path.cwd())
+        os.chdir(self.root)
 
     def test_read_utf8_file(self):
-        """Return UTF-8 content and a normalized repository-relative path."""
+        """Return UTF-8 content and a normalized absolute path."""
 
         (self.root / "notes").mkdir()
         (self.root / "notes/example.txt").write_text("Hello world", encoding="utf-8")
@@ -26,7 +25,7 @@ class ReadFileTests(unittest.TestCase):
         self.assertEqual(
             result,
             {
-                "path": "notes/example.txt",
+                "path": (self.root / "notes/example.txt").as_posix(),
                 "content": "Hello world",
                 "truncated": False,
             },
@@ -95,31 +94,31 @@ class ReadFileTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "regular file"):
             read_file(".")
 
-    def test_paths_outside_repository(self):
-        """Reject absolute paths and traversal outside the repository."""
+    def test_absolute_and_relative_paths(self):
+        """Read absolute paths and paths outside the current directory."""
 
         outside = Path(self.directory.name) / "outside.txt"
         outside.write_text("outside", encoding="utf-8")
-        with self.assertRaises(ValueError):
-            read_file(str(outside))
-        with self.assertRaises(PermissionError):
-            read_file("../outside.txt")
+        self.assertEqual(read_file(str(outside))["content"], "outside")
+        self.assertEqual(read_file("../outside.txt")["content"], "outside")
 
     def test_symlink_outside_repository(self):
-        """Resolve symlinks before enforcing the repository boundary."""
+        """Resolve symlinks to files outside the current directory."""
 
         outside = Path(self.directory.name) / "outside.txt"
         outside.write_text("outside", encoding="utf-8")
         (self.root / "link.txt").symlink_to(outside)
-        with self.assertRaises(PermissionError):
-            read_file("link.txt")
+        result = read_file("link.txt")
+        self.assertEqual(result["path"], outside.resolve().as_posix())
+        self.assertEqual(result["content"], "outside")
 
 
 class ReadFileRepositoryTests(unittest.TestCase):
-    def test_repository_root(self):
-        """Read a file relative to the actual repository root."""
-        result = read_file("agent/tools/read_file.py")
-        self.assertEqual(result["path"], "agent/tools/read_file.py")
+    def test_read_repository_file(self):
+        """Read a repository file using its absolute path."""
+        file_path = Path(__file__).resolve().parents[2] / "agent/tools/read_file.py"
+        result = read_file(str(file_path))
+        self.assertEqual(result["path"], file_path.as_posix())
 
 
 if __name__ == "__main__":
