@@ -62,14 +62,21 @@ class LVMRunner(ModelRunner):
         model_name: str = DEFAULT_MODEL,
         device: str | None = None,
         *,
+        dtype=None,
         load_in_4bit: bool = True,
     ):
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = torch.device(device)
+        logger.info(f"Using {self.device}")
+
+        if dtype is not None:
+            self.dtype = dtype
+        else:
+            self.dtype = torch.float32 if self.device.type == "cpu" else torch.bfloat16
+
         if load_in_4bit:
             assert self.device.type == "cuda", "4-bit loading requires a CUDA device"
-        logger.info(f"Using {self.device}")
 
         self.processor = AutoProcessor.from_pretrained(model_name)
         self.tokenizer = self.processor.tokenizer
@@ -77,14 +84,13 @@ class LVMRunner(ModelRunner):
         # for BPE tokenizer TokenizersBackend" warning
         self.tokenizer.clean_up_tokenization_spaces = False
 
-        dtype = torch.float32 if self.device.type == "cpu" else torch.float16
-        model_options = {"dtype": dtype}
+        model_options = {"dtype": self.dtype}
         if load_in_4bit:
             model_options.update(
                 quantization_config=BitsAndBytesConfig(
                     load_in_4bit=True,
                     bnb_4bit_quant_type="nf4",
-                    bnb_4bit_compute_dtype=torch.float16,
+                    bnb_4bit_compute_dtype=torch.bfloat16,
                     bnb_4bit_use_double_quant=True,
                 ),
                 device_map={"": self.device},
@@ -97,7 +103,7 @@ class LVMRunner(ModelRunner):
         if not load_in_4bit:
             self.model.to(self.device)
         else:
-            logger.info("Loaded model with 4-bit NF4 weights and float16 computation")
+            logger.info("Loaded model with 4-bit NF4 weights and bfloat16 computation")
         self.model.eval()
 
     def run(
@@ -216,6 +222,8 @@ class LVMRunner(ModelRunner):
 
         # Generation
         with torch.inference_mode():
+            inputs = inputs.to(self.dtype)
+            inputs = inputs.to(self.device)
             output = self.model.generate(**inputs, **generation_options)
 
         # Answer decoding
