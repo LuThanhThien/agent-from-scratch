@@ -4,7 +4,7 @@ from loguru import logger
 import torch
 from transformers import AutoModelForCausalLM, AutoProcessor, TextStreamer
 
-from ._base import ModelRunner
+from ._base import Block
 
 DEFAULT_MODEL = "meta-llama/Llama-3.2-1B-Instruct"
 
@@ -19,7 +19,7 @@ class _CallbackStreamer(TextStreamer):
             self.text_callback(text)
 
 
-class LLMRunner(ModelRunner):
+class LLM(Block):
     """Load a Transformers text model once, then call run() for each prompt.
 
     Runs are independent. Pass chat messages to include conversation history.
@@ -123,7 +123,7 @@ def main() -> None:
     parser.add_argument("--max-new-tokens", type=int, default=256)
     args = parser.parse_args()
 
-    runner = LLMRunner(model_name=args.model)
+    runner = LLM(model_name=args.model)
     model_label = args.model.rsplit("/", 1)[-1]
     model_label = f"🤖 {model_label}"
 

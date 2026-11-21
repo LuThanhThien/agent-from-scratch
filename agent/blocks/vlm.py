@@ -17,7 +17,7 @@ from transformers import (
 from transformers.video_utils import load_video
 from transformers.image_utils import load_image
 
-from ._base import ModelRunner
+from ._base import Block
 
 DEFAULT_MODEL = "Qwen/Qwen3-VL-2B-Instruct"
 
@@ -54,7 +54,7 @@ class _CallbackStreamer(TextStreamer):
             self.text_callback(text)
 
 
-class LVMRunner(ModelRunner):
+class VLM(Block):
     """Load Qwen-VL once and return text answers for independent calls."""
 
     def __init__(
@@ -286,7 +286,7 @@ def main() -> None:
         except Exception as error:
             assert False, f"cannot read JSON file: {error}"
 
-    runner = LVMRunner(
+    runner = VLM(
         model_name=args.model, device=args.device, load_in_4bit=not args.disable_4bit
     )
     model_label = args.model.rsplit("/", 1)[-1]
