@@ -1,5 +1,8 @@
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+
+import torch
+from transformers import BatchEncoding
 
 from agent.blocks import FunctionLLM
 
@@ -10,17 +13,33 @@ def double(value):
 
 class FunctionLLMTests(unittest.TestCase):
     def setUp(self):
-        self.runner = Mock()
-        self.runner.run.return_value = "model response"
+        self.enterContext(patch("torch.cuda.is_available", return_value=False))
+        self.load_model = self.enterContext(
+            patch("agent.blocks.function_llm.AutoModelForCausalLM.from_pretrained")
+        )
+        self.load_tokenizer = self.enterContext(
+            patch("agent.blocks.function_llm.AutoTokenizer.from_pretrained")
+        )
+        self.model = self.load_model.return_value
+        self.tokenizer = self.load_tokenizer.return_value
+        inputs = BatchEncoding({"input_ids": torch.tensor([[1, 2]])})
+        self.tokenizer.apply_chat_template.return_value = inputs
+        self.tokenizer.decode.return_value = "model response"
+        self.model.generate.return_value = torch.tensor([[1, 2, 3]])
 
     def test_no_calls(self):
         """Return the model response when no function is requested."""
-        block = FunctionLLM(self.runner, [double], lambda text: [])
+        block = FunctionLLM("test-model", [double], lambda text: [])
 
         self.assertEqual(
             block.run("Hello"),
             {"raw": "model response", "tool_calls": [], "error": None},
         )
+
+        self.load_tokenizer.assert_called_once_with("test-model")
+        self.load_model.assert_called_once_with("test-model", dtype=torch.float32)
+        self.model.to.assert_called_once_with(torch.device("cpu"))
+        self.model.eval.assert_called_once_with()
 
     def test_execute_calls(self):
         """Execute parsed calls and return their individual results."""
@@ -28,7 +47,7 @@ class FunctionLLMTests(unittest.TestCase):
             {"name": "double", "arguments": {"value": 2}},
             {"name": "double", "arguments": {"value": 3}},
         ]
-        block = FunctionLLM(self.runner, [double], lambda text: calls)
+        block = FunctionLLM("test-model", [double], lambda text: calls)
 
         result = block.run("Double the numbers")
 
@@ -45,7 +64,7 @@ class FunctionLLMTests(unittest.TestCase):
         def parse(text):
             raise ValueError("Invalid call")
 
-        block = FunctionLLM(self.runner, [function], parse)
+        block = FunctionLLM("test-model", [function], parse)
         result = block.run("Use a function")
 
         self.assertEqual(result["tool_calls"], [])
@@ -61,7 +80,7 @@ class FunctionLLMTests(unittest.TestCase):
         def fail(value):
             raise ValueError("Cannot double this value")
 
-        block = FunctionLLM(self.runner, [fail], lambda text: calls)
+        block = FunctionLLM("test-model", [fail], lambda text: calls)
         result = block.run("Double the value")
 
         self.assertIsNone(result["error"])
@@ -76,15 +95,19 @@ class FunctionLLMTests(unittest.TestCase):
     def test_message_history(self):
         """Pass conversation history without modifying the caller's list."""
         messages = [{"role": "user", "content": "Hello"}]
-        block = FunctionLLM(self.runner, [double], lambda text: [])
+        block = FunctionLLM("test-model", [double], lambda text: [])
         block.run(messages, max_new_tokens=50, temperature=0)
 
-        passed_messages = self.runner.run.call_args.args[0]
+        passed_messages = self.tokenizer.apply_chat_template.call_args.args[0]
         self.assertEqual(messages, [{"role": "user", "content": "Hello"}])
         self.assertEqual(passed_messages, messages)
         self.assertIsNot(passed_messages, messages)
-        self.assertEqual(self.runner.run.call_args.kwargs["max_new_tokens"], 50)
-        self.assertEqual(self.runner.run.call_args.kwargs["temperature"], 0)
+        self.assertEqual(self.model.generate.call_args.kwargs["max_new_tokens"], 50)
+        self.assertFalse(self.model.generate.call_args.kwargs["do_sample"])
+
+        tokens = self.tokenizer.decode.call_args.args[0]
+        self.assertEqual(tokens.tolist(), [3])
+        self.assertFalse(self.tokenizer.decode.call_args.kwargs["skip_special_tokens"])
 
 
 if __name__ == "__main__":

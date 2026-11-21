@@ -1,6 +1,9 @@
 from collections.abc import Callable
 import json
 
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 from ._base import Block
 
 
@@ -8,22 +11,26 @@ class FunctionLLM(Block):
     """Use a model to select and execute one batch of tool calls.
 
     Args:
-        model_runner: Model runner used to generate a tool decision.
+        model_name: Text model to load once for tool decisions.
         tools: Functions available to the model, identified by their names.
         extract_tool_calls: Parser that converts model output into a list of
             calls with `name` and `arguments` keys. Return an empty list when
             there are no calls, or raise an error for malformed output.
+        device: Optional device for the text model.
+        dtype: Optional weight dtype for the text model.
     """
 
     def __init__(
         self,
-        model_runner: Block,
+        model_name: str,
         tools: list[Callable],
         extract_tool_calls: Callable,
+        *,
+        device: str | None = None,
+        dtype=None,
     ):
         assert callable(extract_tool_calls)
         # Components
-        self.model_runner = model_runner
         self.tools = tools
         self.extract_tool_calls = extract_tool_calls
 
@@ -34,6 +41,49 @@ class FunctionLLM(Block):
             if name in self.tool_registry:
                 raise ValueError(f"Duplicate tool name: {name}")
             self.tool_registry[name] = func
+
+        # Load model and tokenizer
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = torch.device(device)
+        if dtype is None:
+            dtype = torch.float32 if self.device.type == "cpu" else torch.bfloat16
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.tokenizer.clean_up_tokenization_spaces = False
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, dtype=dtype)
+        self.model.to(self.device)
+        self.model.eval()
+
+    def _generate(self, messages, max_new_tokens, temperature):
+        """Generate raw text with the control tokens expected by the parser."""
+        temperature = 0.7 if temperature is None else temperature
+        assert temperature >= 0, "temperature must be zero or greater"
+        assert max_new_tokens > 0, "max_new_tokens must be greater than zero"
+
+        tokenizer = self.tokenizer
+        inputs = tokenizer.apply_chat_template(
+            messages,
+            tools=self.tools,
+            add_generation_prompt=True,
+            tokenize=True,
+            return_dict=True,
+            return_tensors="pt",
+        )
+
+        pad_id = tokenizer.pad_token_id
+        options = {
+            "max_new_tokens": max_new_tokens,
+            "do_sample": temperature > 0,
+            "pad_token_id": tokenizer.eos_token_id if pad_id is None else pad_id,
+        }
+        if temperature > 0:
+            options.update(temperature=temperature, top_p=0.9)
+        with torch.inference_mode():
+            inputs = inputs.to(self.device)
+            tokens = self.model.generate(**inputs, **options)
+        return tokenizer.decode(
+            tokens[0, inputs["input_ids"].shape[-1] :], skip_special_tokens=False
+        )
 
     def _extract_tool_calls(self, text: str) -> list:
         """Parse tool calls from the model's output."""
@@ -87,14 +137,7 @@ class FunctionLLM(Block):
         else:
             raise TypeError(f"Not supported: prompt {type(prompt)}")
 
-        # Configurations
-        options = {"max_new_tokens": max_new_tokens}
-        if temperature is not None:
-            options["temperature"] = temperature
-        options["tools"] = self.tools
-
-        # Model run
-        response = self.model_runner.run(messages, **options)
+        response = self._generate(messages, max_new_tokens, temperature)
 
         # Parse tool calls
         outputs = {"raw": response, "tool_calls": [], "error": None}
