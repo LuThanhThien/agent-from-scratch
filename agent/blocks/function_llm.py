@@ -1,8 +1,6 @@
 from collections.abc import Callable
 import json
 
-from models._base import ModelRunner
-
 from ._base import Block
 
 
@@ -19,7 +17,7 @@ class FunctionLLM(Block):
 
     def __init__(
         self,
-        model_runner: ModelRunner,
+        model_runner: Block,
         tools: list[Callable],
         extract_tool_calls: Callable,
     ):
