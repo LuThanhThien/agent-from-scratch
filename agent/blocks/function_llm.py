@@ -5,6 +5,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from ._base import Block
+from .function_handlers import AutoFunctionCallHandler
 
 
 class FunctionLLM(Block):
@@ -13,9 +14,6 @@ class FunctionLLM(Block):
     Args:
         model_name: Text model to load once for tool decisions.
         tools: Functions available to the model, identified by their names.
-        extract_tool_calls: Parser that converts model output into a list of
-            calls with `name` and `arguments` keys. Return an empty list when
-            there are no calls, or raise an error for malformed output.
         device: Optional device for the text model.
         dtype: Optional weight dtype for the text model.
     """
@@ -24,15 +22,13 @@ class FunctionLLM(Block):
         self,
         model_name: str,
         tools: list[Callable],
-        extract_tool_calls: Callable,
         *,
         device: str | None = None,
         dtype=None,
     ):
-        assert callable(extract_tool_calls)
         # Components
         self.tools = tools
-        self.extract_tool_calls = extract_tool_calls
+        self.function_handler = AutoFunctionCallHandler.from_pretrained(model_name)
 
         # Tool registry
         self.tool_registry = {}
@@ -61,14 +57,8 @@ class FunctionLLM(Block):
         assert max_new_tokens > 0, "max_new_tokens must be greater than zero"
 
         tokenizer = self.tokenizer
-        inputs = tokenizer.apply_chat_template(
-            messages,
-            tools=self.tools,
-            add_generation_prompt=True,
-            tokenize=True,
-            return_dict=True,
-            return_tensors="pt",
-        )
+        prompt = self.function_handler.format_prompt(messages, self.tools)
+        inputs = tokenizer(prompt, return_tensors="pt")
 
         pad_id = tokenizer.pad_token_id
         options = {
@@ -84,12 +74,6 @@ class FunctionLLM(Block):
         return tokenizer.decode(
             tokens[0, inputs["input_ids"].shape[-1] :], skip_special_tokens=False
         )
-
-    def _extract_tool_calls(self, text: str) -> list:
-        """Parse tool calls from the model's output."""
-        assert callable(self.extract_tool_calls)
-        tool_calls = self.extract_tool_calls(text)
-        return tool_calls
 
     def _execute_tool(self, call: dict) -> dict:
         """Execute a tool and return a JSON-compatible success or error result."""
@@ -142,7 +126,7 @@ class FunctionLLM(Block):
         # Parse tool calls
         outputs = {"raw": response, "tool_calls": [], "error": None}
         try:
-            tool_calls = self._extract_tool_calls(text=response)
+            tool_calls = self.function_handler.decode(response)
         except Exception as error:
             outputs["error"] = {"type": type(error).__name__, "message": str(error)}
             return outputs
