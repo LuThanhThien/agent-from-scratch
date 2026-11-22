@@ -1,5 +1,4 @@
 import argparse
-import json
 import sys
 
 from loguru import logger
@@ -12,7 +11,22 @@ logging.set_verbosity_error()
 from afs.blocks import FunctionLLM
 from afs.blocks.llm import LLM
 from afs import tools as T
-from afs.blocks.function_handlers import AutoFunctionCallHandler
+
+
+def format_source(call: dict) -> str:
+    """Present file contents, directory entries, or an execution error to the chat model."""
+    result = call["result"]
+    if not result["ok"]:
+        return f"{call['name']}({call['arguments']}): {result['error']['message']}"
+
+    data = result["data"]
+    if call["name"] == "read_file":
+        text = data["content"]
+    else:
+        text = "\n".join(data["files"]) or "(empty directory)"
+
+    label = " (truncated)" if data["truncated"] else ""
+    return f"{data['path']}{label}\n{text}"
 
 
 def main() -> None:
@@ -20,16 +34,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", default="Qwen/Qwen3-0.6B")
     parser.add_argument("--answer-model", default="meta-llama/Llama-3.2-1B-Instruct")
-    parser.add_argument("--answer-device", help="Device for the answer model, e.g. cpu")
+    parser.add_argument("--device", help="Device for both models, e.g. cpu")
     parser.add_argument(
         "--debug", action="store_true", help="Show the tool decision and results"
     )
     parser.add_argument("--prompt", help="Run one request instead of interactive mode")
-    parser.add_argument(
-        "--print-prompt",
-        action="store_true",
-        help="Render --prompt without loading model weights",
-    )
     parser.add_argument("--max-new-tokens", type=int, default=512)
     parser.add_argument("--temperature", type=float, default=0.95)
     args = parser.parse_args()
@@ -51,23 +60,10 @@ def main() -> None:
             ),
         }
     ]
-    if args.print_prompt:
-        if args.prompt is None:
-            parser.error("--print-prompt requires --prompt")
-        handler = AutoFunctionCallHandler.from_pretrained(args.model)
-        print(
-            handler.format_prompt(
-                [*tool_history, {"role": "user", "content": args.prompt}], tools
-            )
-        )
-        return
 
-    tool_model = FunctionLLM(
-        model_name=args.model,
-        tools=tools,
-    )
+    tool_model = FunctionLLM(model_name=args.model, tools=tools, device=args.device)
 
-    answer_model = LLM(args.answer_model, device=args.answer_device)
+    answer_model = LLM(args.answer_model, device=args.device)
 
     # Each model receives history in its own message format.
     chat_history = [
@@ -75,7 +71,7 @@ def main() -> None:
             "role": "system",
             "content": (
                 "Answer the user's request directly and follow their requested format. "
-                "Use the supplied file contents to answer questions about files. "
+                "Use only facts explicitly stated in the supplied sources for questions about them. "
                 "If the requested contents are missing, say so. Report a cause only if a tool returned it."
             ),
         }
@@ -113,7 +109,8 @@ def main() -> None:
                 tool_turn.append(
                     {"role": "tool", "name": call["name"], "content": call["result"]}
                 )
-            content += "\n\nTool results:\n" + json.dumps(calls, ensure_ascii=False)
+            sources = "\n\n".join(format_source(call) for call in calls)
+            content = f"{prompt}\n\nSource material:\n{sources}\n\nAnswer the request above using this material."
         elif decision["error"]:
             content += (
                 "\n\nTool request failed before execution: "
