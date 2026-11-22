@@ -5,6 +5,7 @@ import torch
 from transformers import BatchEncoding
 
 from agent.blocks import FunctionLLM
+from agent.blocks.function_handlers import AutoFunctionCallHandler, FunctionCallHandler
 
 
 def double(value):
@@ -20,16 +21,31 @@ class FunctionLLMTests(unittest.TestCase):
         self.load_tokenizer = self.enterContext(
             patch("agent.blocks.function_llm.AutoTokenizer.from_pretrained")
         )
+        self.enterContext(patch.dict(AutoFunctionCallHandler._handlers, clear=True))
+
+        class TestHandler(FunctionCallHandler):
+            format_prompt = Mock(return_value="formatted prompt")
+            decode = Mock(return_value=[])
+
+        self.handler = TestHandler
+        AutoFunctionCallHandler.register("test-model", TestHandler)
         self.model = self.load_model.return_value
         self.tokenizer = self.load_tokenizer.return_value
         inputs = BatchEncoding({"input_ids": torch.tensor([[1, 2]])})
-        self.tokenizer.apply_chat_template.return_value = inputs
+        self.tokenizer.return_value = inputs
         self.tokenizer.decode.return_value = "model response"
         self.model.generate.return_value = torch.tensor([[1, 2, 3]])
 
+    def test_unknown_model(self):
+        """Reject an unregistered checkpoint before loading its weights."""
+        with self.assertRaisesRegex(ValueError, "No tool handler"):
+            FunctionLLM("unknown", [])
+        self.load_model.assert_not_called()
+        self.load_tokenizer.assert_not_called()
+
     def test_no_calls(self):
         """Return the model response when no function is requested."""
-        block = FunctionLLM("test-model", [double], lambda text: [])
+        block = FunctionLLM("test-model", [double])
 
         self.assertEqual(
             block.run("Hello"),
@@ -43,11 +59,11 @@ class FunctionLLMTests(unittest.TestCase):
 
     def test_execute_calls(self):
         """Execute parsed calls and return their individual results."""
-        calls = [
+        self.handler.decode.return_value = [
             {"name": "double", "arguments": {"value": 2}},
             {"name": "double", "arguments": {"value": 3}},
         ]
-        block = FunctionLLM("test-model", [double], lambda text: calls)
+        block = FunctionLLM("test-model", [double])
 
         result = block.run("Double the numbers")
 
@@ -61,10 +77,9 @@ class FunctionLLMTests(unittest.TestCase):
         """Return parser errors without executing a function."""
         function = Mock(__name__="function")
 
-        def parse(text):
-            raise ValueError("Invalid call")
+        self.handler.decode.side_effect = ValueError("Invalid call")
 
-        block = FunctionLLM("test-model", [function], parse)
+        block = FunctionLLM("test-model", [function])
         result = block.run("Use a function")
 
         self.assertEqual(result["tool_calls"], [])
@@ -75,12 +90,14 @@ class FunctionLLMTests(unittest.TestCase):
 
     def test_function_error(self):
         """Return a function's error with its call."""
-        calls = [{"name": "fail", "arguments": {"value": "bad"}}]
+        self.handler.decode.return_value = [
+            {"name": "fail", "arguments": {"value": "bad"}}
+        ]
 
         def fail(value):
             raise ValueError("Cannot double this value")
 
-        block = FunctionLLM("test-model", [fail], lambda text: calls)
+        block = FunctionLLM("test-model", [fail])
         result = block.run("Double the value")
 
         self.assertIsNone(result["error"])
@@ -95,10 +112,13 @@ class FunctionLLMTests(unittest.TestCase):
     def test_message_history(self):
         """Pass conversation history without modifying the caller's list."""
         messages = [{"role": "user", "content": "Hello"}]
-        block = FunctionLLM("test-model", [double], lambda text: [])
+        block = FunctionLLM("test-model", [double])
         block.run(messages, max_new_tokens=50, temperature=0)
 
-        passed_messages = self.tokenizer.apply_chat_template.call_args.args[0]
+        passed_messages, tools = self.handler.format_prompt.call_args.args
+        self.assertEqual(tools, [double])
+        self.tokenizer.assert_called_once_with("formatted prompt", return_tensors="pt")
+        self.handler.decode.assert_called_once_with("model response")
         self.assertEqual(messages, [{"role": "user", "content": "Hello"}])
         self.assertEqual(passed_messages, messages)
         self.assertIsNot(passed_messages, messages)
