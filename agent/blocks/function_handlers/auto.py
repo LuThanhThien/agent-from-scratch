@@ -2,6 +2,7 @@ from ._base import FunctionCallHandler
 
 # Function call model-specific handlers
 # NOTE: import in alphabetical order
+from .functiongemma import FunctionGemmaFCHandler
 from .qwen3 import Qwen3FCHandler
 
 
@@ -9,7 +10,8 @@ class AutoFunctionCallHandler:
     """Create the prompt formatter and response decoder registered for a checkpoint."""
 
     _handlers: dict[str, type[FunctionCallHandler]] = {
-        "Qwen/Qwen3-0.6B": Qwen3FCHandler
+        "Qwen/Qwen3-0.6B": Qwen3FCHandler,
+        "google/functiongemma-270m-it": FunctionGemmaFCHandler,
     }
 
     @classmethod
