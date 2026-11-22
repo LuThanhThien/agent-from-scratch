@@ -61,7 +61,7 @@ class LLM(Block):
         max_new_tokens: int = 256,
         temperature: float = 0.7,
         top_p: float = 0.9,
-        tools: list = [],
+        tools: list | None = None,
     ) -> str:
         """Return the answer with given prompt.
         A prompt can be a string or chat messages with role/content keys.
@@ -100,7 +100,7 @@ class LLM(Block):
             tokenize=True,
             return_dict=True,
             return_tensors="pt",
-            tools=tools,
+            tools=tools if tools else None,
         )
         # Generation
         with torch.inference_mode():
