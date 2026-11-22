@@ -1,4 +1,4 @@
-from agent.blocks.llm import LLM
+from afs.blocks.llm import LLM
 
 
 def main() -> None:

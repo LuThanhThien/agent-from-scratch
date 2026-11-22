@@ -1,7 +1,7 @@
 from typing import Any
 from pathlib import Path
 
-from agent.blocks.vlm import VLM
+from afs.blocks.vlm import VLM
 
 
 def image_size(value: str) -> tuple[int, int]:

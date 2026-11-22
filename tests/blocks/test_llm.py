@@ -4,12 +4,12 @@ from unittest.mock import patch
 import torch
 from transformers import BatchEncoding
 
-from agent.blocks.llm import LLM
+from afs.blocks.llm import LLM
 
 
 class LLMTests(unittest.TestCase):
-    @patch("agent.blocks.llm.AutoModelForCausalLM.from_pretrained")
-    @patch("agent.blocks.llm.AutoProcessor.from_pretrained")
+    @patch("afs.blocks.llm.AutoModelForCausalLM.from_pretrained")
+    @patch("afs.blocks.llm.AutoProcessor.from_pretrained")
     def test_default_dtypes(self, processor, model):
         """Use float32 on CPU and bfloat16 on CUDA."""
         for device, dtype in (("cpu", torch.float32), ("cuda", torch.bfloat16)):
@@ -18,8 +18,8 @@ class LLMTests(unittest.TestCase):
                 self.assertEqual(runner.dtype, dtype)
                 self.assertEqual(model.call_args.kwargs["dtype"], dtype)
 
-    @patch("agent.blocks.llm.AutoModelForCausalLM.from_pretrained")
-    @patch("agent.blocks.llm.AutoProcessor.from_pretrained")
+    @patch("afs.blocks.llm.AutoModelForCausalLM.from_pretrained")
+    @patch("afs.blocks.llm.AutoProcessor.from_pretrained")
     def test_pass_tools_to_chat_template(self, processor, model):
         """Pass tools to the template and keep token IDs as integers."""
         tokenizer = processor.return_value
