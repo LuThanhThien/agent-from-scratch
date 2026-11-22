@@ -4,8 +4,8 @@ from unittest.mock import Mock, patch
 import torch
 from transformers import BatchEncoding
 
-from agent.blocks import FunctionLLM
-from agent.blocks.function_handlers import AutoFunctionCallHandler, FunctionCallHandler
+from afs.blocks import FunctionLLM
+from afs.blocks.function_handlers import AutoFunctionCallHandler, FunctionCallHandler
 
 
 def double(value):
@@ -16,10 +16,10 @@ class FunctionLLMTests(unittest.TestCase):
     def setUp(self):
         self.enterContext(patch("torch.cuda.is_available", return_value=False))
         self.load_model = self.enterContext(
-            patch("agent.blocks.function_llm.AutoModelForCausalLM.from_pretrained")
+            patch("afs.blocks.function_llm.AutoModelForCausalLM.from_pretrained")
         )
         self.load_tokenizer = self.enterContext(
-            patch("agent.blocks.function_llm.AutoTokenizer.from_pretrained")
+            patch("afs.blocks.function_llm.AutoTokenizer.from_pretrained")
         )
         self.enterContext(patch.dict(AutoFunctionCallHandler._handlers, clear=True))
 

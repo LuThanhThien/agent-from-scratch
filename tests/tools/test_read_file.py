@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 import os
 import unittest
 
-from agent.tools.read_file import read_file
+from afs.tools.read_file import read_file
 
 
 class ReadFileTests(unittest.TestCase):
@@ -116,7 +116,7 @@ class ReadFileTests(unittest.TestCase):
 class ReadFileRepositoryTests(unittest.TestCase):
     def test_read_repository_file(self):
         """Read a repository file using its absolute path."""
-        file_path = Path(__file__).resolve().parents[2] / "agent/tools/read_file.py"
+        file_path = Path(__file__).resolve().parents[2] / "afs/tools/read_file.py"
         result = read_file(str(file_path))
         self.assertEqual(result["path"], file_path.as_posix())
 

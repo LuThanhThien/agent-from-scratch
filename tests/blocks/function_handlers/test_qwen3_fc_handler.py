@@ -1,8 +1,8 @@
 import json
 import unittest
 
-from agent.blocks.function_handlers import AutoFunctionCallHandler
-from agent.tools import read_file
+from afs.blocks.function_handlers import AutoFunctionCallHandler
+from afs.tools import read_file
 
 
 class Qwen3FCHandlerTests(unittest.TestCase):

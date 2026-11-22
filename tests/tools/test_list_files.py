@@ -2,7 +2,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from agent.tools import list_files
+from afs.tools import list_files
 
 
 class ListFilesTests(unittest.TestCase):

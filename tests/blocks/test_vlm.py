@@ -4,12 +4,12 @@ from unittest.mock import patch
 import torch
 from transformers.feature_extraction_utils import BatchFeature
 
-from agent.blocks.vlm import VLM
+from afs.blocks.vlm import VLM
 
 
 class VLMTests(unittest.TestCase):
-    @patch("agent.blocks.vlm.AutoModelForImageTextToText.from_pretrained")
-    @patch("agent.blocks.vlm.AutoProcessor.from_pretrained")
+    @patch("afs.blocks.vlm.AutoModelForImageTextToText.from_pretrained")
+    @patch("afs.blocks.vlm.AutoProcessor.from_pretrained")
     def test_dtypes(self, processor, model):
         """Use device defaults and allow an explicit dtype."""
         for device, requested, expected in (
@@ -22,9 +22,9 @@ class VLMTests(unittest.TestCase):
                 self.assertEqual(runner.dtype, expected)
                 self.assertEqual(model.call_args.kwargs["dtype"], expected)
 
-    @patch("agent.blocks.vlm.BitsAndBytesConfig")
-    @patch("agent.blocks.vlm.AutoModelForImageTextToText.from_pretrained")
-    @patch("agent.blocks.vlm.AutoProcessor.from_pretrained")
+    @patch("afs.blocks.vlm.BitsAndBytesConfig")
+    @patch("afs.blocks.vlm.AutoModelForImageTextToText.from_pretrained")
+    @patch("afs.blocks.vlm.AutoProcessor.from_pretrained")
     def test_quantized_computation_dtype(self, processor, model, quantization):
         """Use bfloat16 computation when loading 4-bit weights."""
         VLM(device="cuda", load_in_4bit=True)
@@ -33,8 +33,8 @@ class VLMTests(unittest.TestCase):
         )
         model.return_value.to.assert_not_called()
 
-    @patch("agent.blocks.vlm.AutoModelForImageTextToText.from_pretrained")
-    @patch("agent.blocks.vlm.AutoProcessor.from_pretrained")
+    @patch("afs.blocks.vlm.AutoModelForImageTextToText.from_pretrained")
+    @patch("afs.blocks.vlm.AutoProcessor.from_pretrained")
     def test_input_dtype(self, processor, model):
         """Convert floating inputs without changing integer token IDs."""
         inputs = BatchFeature(
