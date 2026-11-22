@@ -1,10 +1,16 @@
 from ._base import FunctionCallHandler
 
+# Function call model-specific handlers
+# NOTE: import in alphabetical order
+from .qwen3 import Qwen3FCHandler
+
 
 class AutoFunctionCallHandler:
     """Create the prompt formatter and response decoder registered for a checkpoint."""
 
-    _handlers: dict[str, type[FunctionCallHandler]] = {}
+    _handlers: dict[str, type[FunctionCallHandler]] = {
+        "Qwen/Qwen3-0.6B": Qwen3FCHandler
+    }
 
     @classmethod
     def register(cls, model_name: str, handler: type[FunctionCallHandler]) -> None:
