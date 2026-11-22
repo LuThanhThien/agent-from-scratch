@@ -93,6 +93,8 @@ class LLM(Block):
                 self.tokenizer, text_callback
             )
 
+        logger.debug("Messages: {}", messages)
+
         # Tokenizer
         inputs = self.tokenizer.apply_chat_template(
             messages,

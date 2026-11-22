@@ -2,6 +2,7 @@ from collections.abc import Callable
 import json
 
 import torch
+from loguru import logger
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from ._base import Block
@@ -81,7 +82,7 @@ class FunctionLLM(Block):
         try:
             func = self.tool_registry[call["name"]]
             arguments = call["arguments"]
-            print(f"Running tool {call["name"]}")
+            logger.debug("Running tool {}", call["name"])
             result = func(**arguments)
             data = json.loads(json.dumps(result, allow_nan=False))
             return {"ok": True, "data": data}
@@ -121,7 +122,9 @@ class FunctionLLM(Block):
         else:
             raise TypeError(f"Not supported: prompt {type(prompt)}")
 
+        logger.debug("Messages: {}", messages)
         response = self._generate(messages, max_new_tokens, temperature)
+        logger.debug("Response: {}", response)
 
         # Parse tool calls
         outputs = {"raw": response, "tool_calls": [], "error": None}
